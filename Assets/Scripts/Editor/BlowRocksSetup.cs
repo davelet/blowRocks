@@ -163,13 +163,17 @@ public class BlowRocksSetup
         gmObj.AddComponent<ScreenBoundary>();
 
         // ============================================
-        //  9. Save scene
+        //  9. Save scene and add to build settings
         // ============================================
         EnsureFolder("Assets/Scenes");
+        var scenePath = "Assets/Scenes/MainScene.unity";
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene(),
-            "Assets/Scenes/MainScene.unity"
+            scenePath
         );
+        EditorBuildSettings.scenes = new EditorBuildSettingsScene[] {
+            new EditorBuildSettingsScene(scenePath, true)
+        };
 
         Debug.Log("=== blowRocks scene setup complete! Press Play to test. ===");
         EditorUtility.DisplayDialog("blowRocks", "Scene setup complete!\n\nPress Play to test the game.", "OK");
