@@ -13,6 +13,9 @@ public class BlowRocksSetup
     [MenuItem("blowRocks/Setup Scene")]
     public static void SetupScene()
     {
+        // Setup Chinese font first (needed for localization)
+        ChineseFontSetup.SetupChineseFont();
+
         CreateSprites();
 
         // ============================================
@@ -146,11 +149,15 @@ public class BlowRocksSetup
         pcSO.ApplyModifiedProperties();
 
         // ============================================
-        //  6b. Add VFX and StarField
+        //  6b. Add VFX, StarField, and Localization
         // ============================================
         gmObj.AddComponent<VFX>();
         gmObj.AddComponent<SFX>();
         gmObj.AddComponent<StarField>();
+
+        // Localization Manager
+        var locGo = new GameObject("LocalizationManager");
+        locGo.AddComponent<LocalizationManager>();
 
         // ============================================
         //  7. Create UI Canvas
@@ -248,6 +255,9 @@ public class BlowRocksSetup
             return Color.Lerp(glow, core, t * t);
         });
 
+        // --- App Icon: ship on starfield ---
+        CreateAndSaveIcon("Assets/Sprites/AppIcon.png", 1024, 1024);
+
         // --- Rock: detailed asteroid with shading and craters ---
         rockSprite = CreateAndSaveSprite("Assets/Sprites/Rock.png", 128, 128, (x, y, s) => {
             float center = s / 2f;
@@ -314,6 +324,82 @@ public class BlowRocksSetup
         importer.mipmapEnabled = false;
         importer.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    static void CreateAndSaveIcon(string path, int w, int h)
+    {
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        var rng = new System.Random(7);
+        float cx = w / 2f, cy = h / 2f;
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                float dx = x - cx, dy = y - cy;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                Color c;
+
+                // Starfield background
+                float noise = (float)(rng.NextDouble());
+                if (noise > 0.997f)
+                    c = new Color(1f, 1f, 1f, 0.9f);
+                else if (noise > 0.993f)
+                    c = new Color(0.8f, 0.85f, 1f, 0.6f);
+                else
+                    c = new Color(0.05f, 0.05f, 0.12f, 1f);
+
+                // Ship body (triangle pointing up)
+                float shipTop = h * 0.37f;
+                float shipBottom = -h * 0.22f;
+                float shipHalfW = w * 0.18f;
+                if (dy >= shipBottom && dy <= shipTop)
+                {
+                    float t = (dy - shipBottom) / (shipTop - shipBottom);
+                    float halfW = Mathf.Lerp(shipHalfW * 0.7f, shipHalfW * 0.08f, t);
+                    if (Mathf.Abs(dx) <= halfW)
+                    {
+                        float edgeDist = 1f - Mathf.Abs(dx) / halfW;
+                        float brightness = Mathf.Clamp01(edgeDist * 1.5f);
+                        c = Color.Lerp(c, new Color(0.4f, 0.8f, 1f, 1f), brightness);
+                    }
+                }
+
+                // Engine glow
+                float engineDist = Mathf.Sqrt(dx * dx + (dy - shipBottom) * (dy - shipBottom));
+                if (engineDist < w * 0.12f)
+                {
+                    float glow = 1f - engineDist / (w * 0.12f);
+                    c = Color.Lerp(c, new Color(1f, 0.6f, 0.2f, 1f), glow * 0.8f);
+                }
+
+                // Rounded corners (mask to circle-ish rounded rect)
+                float cornerR = w * 0.18f;
+                float halfSide = w / 2f;
+                float cornerCx = Mathf.Sign(dx) * (halfSide - cornerR);
+                float cornerCy = Mathf.Sign(dy) * (halfSide - cornerR);
+                if (Mathf.Abs(dx) > halfSide - cornerR && Mathf.Abs(dy) > halfSide - cornerR)
+                {
+                    float cDist = Mathf.Sqrt((dx - cornerCx) * (dx - cornerCx) + (dy - cornerCy) * (dy - cornerCy));
+                    if (cDist > cornerR)
+                        c.a *= Mathf.Clamp01((cornerR + 2f - cDist) / 2f);
+                }
+
+                tex.SetPixel(x, y, c);
+            }
+        }
+
+        tex.Apply();
+        var png = tex.EncodeToPNG();
+        System.IO.File.WriteAllBytes(path, png);
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        importer.textureType = TextureImporterType.Default;
+        importer.isReadable = true;
+        importer.mipmapEnabled = false;
+        importer.maxTextureSize = 1024;
+        importer.SaveAndReimport();
     }
 
     static GameObject CreateSquareSprite(string name, Color color)
@@ -503,6 +589,206 @@ public class BlowRocksSetup
         uiSO.FindProperty("restartButton").objectReferenceValue = btn;
         uiSO.ApplyModifiedProperties();
 
+        // ============================================
+        //  Pause Menu
+        // ============================================
+        var pauseGo = new GameObject("PausePanel");
+        pauseGo.transform.SetParent(canvasGo.transform, false);
+        var pauseRect = pauseGo.AddComponent<RectTransform>();
+        pauseRect.anchorMin = Vector2.zero;
+        pauseRect.anchorMax = Vector2.one;
+        pauseRect.sizeDelta = Vector2.zero;
+        var pauseImg = pauseGo.AddComponent<Image>();
+        pauseImg.color = new Color(0, 0, 0, 0.75f);
+
+        // Pause title
+        var pauseTitleGo = new GameObject("PauseTitle");
+        pauseTitleGo.transform.SetParent(pauseGo.transform, false);
+        var ptRect = pauseTitleGo.AddComponent<RectTransform>();
+        ptRect.anchorMin = new Vector2(0.5f, 0.5f);
+        ptRect.anchorMax = new Vector2(0.5f, 0.5f);
+        ptRect.sizeDelta = new Vector2(400, 60);
+        ptRect.anchoredPosition = new Vector2(0, 100);
+        var ptText = pauseTitleGo.AddComponent<TextMeshProUGUI>();
+        ptText.text = "PAUSED";
+        ptText.fontSize = 48;
+        ptText.color = new Color(0.4f, 0.8f, 1f);
+        ptText.alignment = TextAlignmentOptions.Center;
+
+        // Button container
+        var btnContainer = new GameObject("ButtonContainer");
+        btnContainer.transform.SetParent(pauseGo.transform, false);
+        var bcRect = btnContainer.AddComponent<RectTransform>();
+        bcRect.anchorMin = new Vector2(0.5f, 0.5f);
+        bcRect.anchorMax = new Vector2(0.5f, 0.5f);
+        bcRect.sizeDelta = new Vector2(250, 280);
+        bcRect.anchoredPosition = new Vector2(0, -20);
+
+        // Resume button
+        var resumeBtn = CreatePauseButton(btnContainer.transform, "Resume", new Vector2(0, 60), new Color(0.2f, 0.7f, 0.3f));
+
+        // Settings button
+        var settingsBtn = CreatePauseButton(btnContainer.transform, "Settings", new Vector2(0, 0), new Color(0.3f, 0.5f, 0.8f));
+
+        // Quit button
+        var quitBtn = CreatePauseButton(btnContainer.transform, "Quit", new Vector2(0, -60), new Color(0.8f, 0.2f, 0.2f));
+
+        // Shrink button container (was 280 for 4 buttons, now 220 for 3)
+        bcRect.sizeDelta = new Vector2(250, 220);
+
+        // ============================================
+        //  Settings Panel (inside pause)
+        // ============================================
+        var settingsGo = new GameObject("SettingsPanel");
+        settingsGo.transform.SetParent(canvasGo.transform, false);
+        var sRect = settingsGo.AddComponent<RectTransform>();
+        sRect.anchorMin = Vector2.zero;
+        sRect.anchorMax = Vector2.one;
+        sRect.sizeDelta = Vector2.zero;
+        var sImg = settingsGo.AddComponent<Image>();
+        sImg.color = new Color(0, 0, 0, 0.85f);
+
+        // Settings title
+        var sTitleGo = new GameObject("SettingsTitle");
+        sTitleGo.transform.SetParent(settingsGo.transform, false);
+        var stRect = sTitleGo.AddComponent<RectTransform>();
+        stRect.anchorMin = new Vector2(0.5f, 0.5f);
+        stRect.anchorMax = new Vector2(0.5f, 0.5f);
+        stRect.sizeDelta = new Vector2(400, 60);
+        stRect.anchoredPosition = new Vector2(0, 80);
+        var stText = sTitleGo.AddComponent<TextMeshProUGUI>();
+        stText.text = "SETTINGS";
+        stText.fontSize = 40;
+        stText.color = new Color(0.4f, 0.8f, 1f);
+        stText.alignment = TextAlignmentOptions.Center;
+
+        // Volume label
+        var volLabelGo = new GameObject("VolumeLabel");
+        volLabelGo.transform.SetParent(settingsGo.transform, false);
+        var vlRect = volLabelGo.AddComponent<RectTransform>();
+        vlRect.anchorMin = new Vector2(0.5f, 0.5f);
+        vlRect.anchorMax = new Vector2(0.5f, 0.5f);
+        vlRect.sizeDelta = new Vector2(200, 30);
+        vlRect.anchoredPosition = new Vector2(-80, 20);
+        var vlText = volLabelGo.AddComponent<TextMeshProUGUI>();
+        vlText.text = "Volume";
+        vlText.fontSize = 22;
+        vlText.color = Color.white;
+        vlText.alignment = TextAlignmentOptions.MidlineLeft;
+
+        // Volume slider
+        var sliderGo = new GameObject("VolumeSlider");
+        sliderGo.transform.SetParent(settingsGo.transform, false);
+        var slRect = sliderGo.AddComponent<RectTransform>();
+        slRect.anchorMin = new Vector2(0.5f, 0.5f);
+        slRect.anchorMax = new Vector2(0.5f, 0.5f);
+        slRect.sizeDelta = new Vector2(200, 20);
+        slRect.anchoredPosition = new Vector2(30, 20);
+        var slider = sliderGo.AddComponent<Slider>();
+        slider.minValue = 0;
+        slider.maxValue = 1;
+        slider.value = AudioListener.volume;
+
+        // Slider background
+        var slBg = new GameObject("Background");
+        slBg.transform.SetParent(sliderGo.transform, false);
+        var slBgRect = slBg.AddComponent<RectTransform>();
+        slBgRect.anchorMin = Vector2.zero;
+        slBgRect.anchorMax = Vector2.one;
+        slBgRect.sizeDelta = Vector2.zero;
+        slBg.AddComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f);
+
+        // Slider fill area
+        var slFillArea = new GameObject("Fill Area");
+        slFillArea.transform.SetParent(sliderGo.transform, false);
+        var slFillAreaRect = slFillArea.AddComponent<RectTransform>();
+        slFillAreaRect.anchorMin = new Vector2(0, 0.25f);
+        slFillAreaRect.anchorMax = new Vector2(1, 0.75f);
+        slFillAreaRect.sizeDelta = Vector2.zero;
+
+        // Slider fill
+        var slFill = new GameObject("Fill");
+        slFill.transform.SetParent(slFillArea.transform, false);
+        var slFillRect = slFill.AddComponent<RectTransform>();
+        slFillRect.anchorMin = Vector2.zero;
+        slFillRect.anchorMax = Vector2.one;
+        slFillRect.sizeDelta = Vector2.zero;
+        slFill.AddComponent<Image>().color = new Color(0.4f, 0.8f, 1f);
+        slider.fillRect = slFillRect;
+
+        // Slider handle area
+        var slHandleArea = new GameObject("Handle Slide Area");
+        slHandleArea.transform.SetParent(sliderGo.transform, false);
+        var slHandleAreaRect = slHandleArea.AddComponent<RectTransform>();
+        slHandleAreaRect.anchorMin = Vector2.zero;
+        slHandleAreaRect.anchorMax = Vector2.one;
+        slHandleAreaRect.sizeDelta = Vector2.zero;
+
+        // Slider handle
+        var slHandle = new GameObject("Handle");
+        slHandle.transform.SetParent(slHandleArea.transform, false);
+        var slHandleRect = slHandle.AddComponent<RectTransform>();
+        slHandleRect.sizeDelta = new Vector2(20, 20);
+        slHandle.AddComponent<Image>().color = Color.white;
+        slider.handleRect = slHandleRect;
+
+        // Volume value label
+        var volValGo = new GameObject("VolumeValue");
+        volValGo.transform.SetParent(settingsGo.transform, false);
+        var vvRect = volValGo.AddComponent<RectTransform>();
+        vvRect.anchorMin = new Vector2(0.5f, 0.5f);
+        vvRect.anchorMax = new Vector2(0.5f, 0.5f);
+        vvRect.sizeDelta = new Vector2(60, 30);
+        vvRect.anchoredPosition = new Vector2(160, 20);
+        var vvText = volValGo.AddComponent<TextMeshProUGUI>();
+        vvText.text = Mathf.RoundToInt(AudioListener.volume * 100) + "%";
+        vvText.fontSize = 22;
+        vvText.color = Color.white;
+        vvText.alignment = TextAlignmentOptions.MidlineLeft;
+
+        // Language toggle button in settings
+        var langBtn = CreatePauseButton(settingsGo.transform, "中文/EN", new Vector2(0, -35), new Color(0.6f, 0.4f, 0.8f));
+        langBtn.gameObject.name = "LangButton";
+        var langBtnText = langBtn.GetComponentInChildren<TextMeshProUGUI>();
+        if (langBtnText != null)
+        {
+            var cjkFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/NotoSansSC SDF.asset");
+            if (cjkFont != null) langBtnText.font = cjkFont;
+        }
+
+        // Back button in settings
+        var backBtn = CreatePauseButton(settingsGo.transform, "Back", new Vector2(0, -85), new Color(0.5f, 0.5f, 0.5f));
+
+        // PauseMenu script
+        var pauseMenuGo = new GameObject("PauseMenu");
+        var pauseMenu = pauseMenuGo.AddComponent<PauseMenu>();
+
+        // Find all text references
+        // Note: buttons are inside ButtonContainer, so paths must include it
+        var pauseTitleText = pauseGo.transform.Find("PauseTitle")?.GetComponent<TMPro.TMP_Text>();
+        var resumeText = pauseGo.transform.Find("ButtonContainer/ResumeButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var settingsText = pauseGo.transform.Find("ButtonContainer/SettingsButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var quitText = pauseGo.transform.Find("ButtonContainer/QuitButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var settingsTitleText = settingsGo.transform.Find("SettingsTitle")?.GetComponent<TMPro.TMP_Text>();
+        var backText = settingsGo.transform.Find("BackButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var langButtonText = settingsGo.transform.Find("LangButton/Text")?.GetComponent<TMPro.TMP_Text>();
+
+        var pmSO = new SerializedObject(pauseMenu);
+        pmSO.FindProperty("pausePanel").objectReferenceValue = pauseGo;
+        pmSO.FindProperty("settingsPanel").objectReferenceValue = settingsGo;
+        pmSO.FindProperty("volumeSlider").objectReferenceValue = slider;
+        pmSO.FindProperty("volumeLabelText").objectReferenceValue = vvText;
+        pmSO.FindProperty("pauseTitleText").objectReferenceValue = pauseTitleText;
+        pmSO.FindProperty("resumeText").objectReferenceValue = resumeText;
+        pmSO.FindProperty("settingsText").objectReferenceValue = settingsText;
+        pmSO.FindProperty("quitText").objectReferenceValue = quitText;
+        pmSO.FindProperty("settingsTitleText").objectReferenceValue = settingsTitleText;
+        pmSO.FindProperty("backText").objectReferenceValue = backText;
+        pmSO.FindProperty("langButtonText").objectReferenceValue = langButtonText;
+        pmSO.ApplyModifiedProperties();
+
+        slider.onValueChanged.AddListener(v => { vvText.text = Mathf.RoundToInt(v * 100) + "%"; });
+
         // EventSystem
         if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
@@ -510,6 +796,34 @@ public class BlowRocksSetup
             esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
             esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
         }
+    }
+
+    static UnityEngine.UI.Button CreatePauseButton(Transform parent, string text, Vector2 pos, Color color)
+    {
+        var btnGo = new GameObject(text + "Button");
+        btnGo.transform.SetParent(parent, false);
+        var btnRect = btnGo.AddComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0.5f);
+        btnRect.anchorMax = new Vector2(0.5f, 0.5f);
+        btnRect.sizeDelta = new Vector2(220, 45);
+        btnRect.anchoredPosition = pos;
+        var btnImg = btnGo.AddComponent<Image>();
+        btnImg.color = color;
+        var btn = btnGo.AddComponent<Button>();
+        btn.targetGraphic = btnImg;
+
+        var txtGo = new GameObject("Text");
+        txtGo.transform.SetParent(btnGo.transform, false);
+        var txtRect = txtGo.AddComponent<RectTransform>();
+        txtRect.anchorMin = Vector2.zero;
+        txtRect.anchorMax = Vector2.one;
+        txtRect.sizeDelta = Vector2.zero;
+        var txt = txtGo.AddComponent<TextMeshProUGUI>();
+        txt.text = text;
+        txt.fontSize = 22;
+        txt.color = Color.white;
+        txt.alignment = TextAlignmentOptions.Center;
+        return btn;
     }
 }
 #endif
