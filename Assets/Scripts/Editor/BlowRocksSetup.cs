@@ -682,8 +682,8 @@ public class BlowRocksSetup
         var slRect = sliderGo.AddComponent<RectTransform>();
         slRect.anchorMin = new Vector2(0.5f, 0.5f);
         slRect.anchorMax = new Vector2(0.5f, 0.5f);
-        slRect.sizeDelta = new Vector2(200, 20);
-        slRect.anchoredPosition = new Vector2(30, 20);
+        slRect.sizeDelta = new Vector2(180, 20);
+        slRect.anchoredPosition = new Vector2(10, 20);
         var slider = sliderGo.AddComponent<Slider>();
         slider.minValue = 0;
         slider.maxValue = 1;
@@ -739,7 +739,7 @@ public class BlowRocksSetup
         vvRect.anchorMin = new Vector2(0.5f, 0.5f);
         vvRect.anchorMax = new Vector2(0.5f, 0.5f);
         vvRect.sizeDelta = new Vector2(60, 30);
-        vvRect.anchoredPosition = new Vector2(160, 20);
+        vvRect.anchoredPosition = new Vector2(155, 20);
         var vvText = volValGo.AddComponent<TextMeshProUGUI>();
         vvText.text = Mathf.RoundToInt(AudioListener.volume * 100) + "%";
         vvText.fontSize = 22;
@@ -777,7 +777,8 @@ public class BlowRocksSetup
         pmSO.FindProperty("pausePanel").objectReferenceValue = pauseGo;
         pmSO.FindProperty("settingsPanel").objectReferenceValue = settingsGo;
         pmSO.FindProperty("volumeSlider").objectReferenceValue = slider;
-        pmSO.FindProperty("volumeLabelText").objectReferenceValue = vvText;
+        pmSO.FindProperty("volumeLabelText").objectReferenceValue = vlText;
+        pmSO.FindProperty("volumeValueText").objectReferenceValue = vvText;
         pmSO.FindProperty("pauseTitleText").objectReferenceValue = pauseTitleText;
         pmSO.FindProperty("resumeText").objectReferenceValue = resumeText;
         pmSO.FindProperty("settingsText").objectReferenceValue = settingsText;

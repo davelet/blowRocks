@@ -17,6 +17,7 @@ public class PauseMenu : MonoBehaviour
     [Header("Settings Panel Texts")]
     [SerializeField] private TextMeshProUGUI settingsTitleText;
     [SerializeField] private TextMeshProUGUI volumeLabelText;
+    [SerializeField] private TextMeshProUGUI volumeValueText;
     [SerializeField] private TextMeshProUGUI backText;
     [SerializeField] private TextMeshProUGUI langButtonText;
 
@@ -170,8 +171,8 @@ public class PauseMenu : MonoBehaviour
     private void OnVolumeChanged(float value)
     {
         AudioListener.volume = value;
-        if (volumeLabelText != null)
-            volumeLabelText.text = Mathf.RoundToInt(value * 100) + "%";
+        if (volumeValueText != null)
+            volumeValueText.text = Mathf.RoundToInt(value * 100) + "%";
     }
 
     private void OnLanguageToggle()
