@@ -71,27 +71,41 @@ public class MusicManager : MonoBehaviour
         sourceA.loop = true;
         sourceB.loop = true;
 
-        // 异步生成音乐片段，避免卡顿
+        // 延迟到第一帧渲染完成后再生成音乐，优先保证启动速度
+        Invoke(nameof(StartGenerateMusic), 0.2f);
+    }
+
+    private void StartGenerateMusic()
+    {
         StartCoroutine(GenerateMusicAsync());
     }
 
     private System.Collections.IEnumerator GenerateMusicAsync()
     {
-        // 分帧生成，避免一次性生成导致卡顿
-        yield return null; // 等待一帧
-        gameplayMusic = GenerateGameplayMusic();
+        // 等待主线程调度器初始化完成
+        yield return null;
         
+        // 完全后台线程生成游戏音乐，不阻塞主线程
+        bool musicReady = false;
+        GenerateGameplayMusicAsync(clip =>
+        {
+            gameplayMusic = clip;
+            musicReady = true;
+        });
+        
+        // 等待音乐生成完成
+        yield return new WaitUntil(() => musicReady);
+        
+        // 播放音乐
+        SubscribeEvents();
+        PlayMusic(GameState.Playing);
+        
+        // 后台低优先级生成其他音乐
         yield return null;
         pauseMusic = GeneratePauseMusic();
         
         yield return null;
         gameOverMusic = GenerateGameOverMusic();
-
-        // 订阅事件
-        SubscribeEvents();
-
-        // 直接播放游戏音乐
-        PlayMusic(GameState.Playing);
     }
 
     private void SubscribeEvents()
@@ -217,64 +231,70 @@ public class MusicManager : MonoBehaviour
     // 程序化音乐生成
     // ============================================
 
-    /// <summary>
-    /// 生成游戏音乐：节奏明快的电子风
-    /// </summary>
-    private AudioClip GenerateGameplayMusic()
+    // 后台线程生成音乐数据，不占用主线程
+    private void GenerateGameplayMusicAsync(System.Action<AudioClip> onComplete)
     {
         int sampleRate = 44100;
         float duration = 16f;
         int samples = Mathf.CeilToInt(sampleRate * duration);
         float[] data = new float[samples];
 
-        float bpm = 128f;
-        float beatLength = 60f / bpm;
-        int samplesPerBeat = Mathf.CeilToInt(sampleRate * beatLength);
-
-        for (int i = 0; i < samples; i++)
+        System.Threading.ThreadPool.QueueUserWorkItem(_ =>
         {
-            float t = (float)i / samples;
-            float beatT = (i % samplesPerBeat) / (float)samplesPerBeat;
-            int currentBeat = (i / samplesPerBeat) % 8;
-            int beatStartSample = (i / samplesPerBeat) * samplesPerBeat;
-            float tBeatSec = (i - beatStartSample) / (float)sampleRate;
+            float bpm = 128f;
+            float beatLength = 60f / bpm;
+            int samplesPerBeat = Mathf.CeilToInt(sampleRate * beatLength);
+            var rand = new System.Random();
 
-            float kick = 0f;
-            if (currentBeat == 0 || currentBeat == 4)
+            for (int i = 0; i < samples; i++)
             {
-                float kickPhase = 2f * Mathf.PI * (150f * tBeatSec - 50f * tBeatSec * tBeatSec / beatLength);
-                kick = Mathf.Sin(kickPhase) * Mathf.Exp(-beatT * 10f) * 0.5f;
+                float t = (float)i / samples;
+                float beatT = (i % samplesPerBeat) / (float)samplesPerBeat;
+                int currentBeat = (i / samplesPerBeat) % 8;
+                int beatStartSample = (i / samplesPerBeat) * samplesPerBeat;
+                float tBeatSec = (i - beatStartSample) / (float)sampleRate;
+
+                float kick = 0f;
+                if (currentBeat == 0 || currentBeat == 4)
+                {
+                    float kickPhase = 2f * Mathf.PI * (150f * tBeatSec - 50f * tBeatSec * tBeatSec / beatLength);
+                    kick = Mathf.Sin(kickPhase) * Mathf.Exp(-beatT * 10f) * 0.5f;
+                }
+
+                float snare = 0f;
+                if (currentBeat == 2 || currentBeat == 6)
+                {
+                    float noise = (float)(rand.NextDouble() * 2.0 - 1.0);
+                    snare = noise * Mathf.Exp(-beatT * 12f) * 0.3f;
+                }
+
+                float hihat = 0f;
+                float hhNoise = (float)(rand.NextDouble() * 2.0 - 1.0);
+                hihat = hhNoise * Mathf.Exp(-beatT * 20f) * 0.15f;
+
+                float bassFreq = 110f;
+                if (currentBeat == 1) bassFreq = 130f;
+                if (currentBeat == 3) bassFreq = 146f;
+                if (currentBeat == 5) bassFreq = 130f;
+                if (currentBeat == 7) bassFreq = 98f;
+                float bass = Mathf.Sin(2f * Mathf.PI * bassFreq * i / sampleRate) * 0.25f;
+
+                float leadFreq = 440f;
+                if (currentBeat % 2 == 0) leadFreq = 523f;
+                float lead = Mathf.Sin(2f * Mathf.PI * leadFreq * i / sampleRate) * 0.15f;
+                lead *= Mathf.Sin(2f * Mathf.PI * 3f * t) * 0.5f + 0.5f;
+
+                data[i] = kick + snare + hihat + bass + lead;
             }
 
-            float snare = 0f;
-            if (currentBeat == 2 || currentBeat == 6)
+            // 回到主线程创建AudioClip
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
             {
-                float noise = (float)(new System.Random(i).NextDouble() * 2.0 - 1.0);
-                snare = noise * Mathf.Exp(-beatT * 12f) * 0.3f;
-            }
-
-            float hihat = 0f;
-            float hhNoise = (float)(new System.Random(i + 1000).NextDouble() * 2.0 - 1.0);
-            hihat = hhNoise * Mathf.Exp(-beatT * 20f) * 0.15f;
-
-            float bassFreq = 110f;
-            if (currentBeat == 1) bassFreq = 130f;
-            if (currentBeat == 3) bassFreq = 146f;
-            if (currentBeat == 5) bassFreq = 130f;
-            if (currentBeat == 7) bassFreq = 98f;
-            float bass = Mathf.Sin(2f * Mathf.PI * bassFreq * i / sampleRate) * 0.25f;
-
-            float leadFreq = 440f;
-            if (currentBeat % 2 == 0) leadFreq = 523f;
-            float lead = Mathf.Sin(2f * Mathf.PI * leadFreq * i / sampleRate) * 0.15f;
-            lead *= Mathf.Sin(2f * Mathf.PI * 3f * t) * 0.5f + 0.5f;
-
-            data[i] = kick + snare + hihat + bass + lead;
-        }
-
-        var clip = AudioClip.Create("GameplayMusic", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        return clip;
+                var clip = AudioClip.Create("GameplayMusic", samples, 1, sampleRate, false);
+                clip.SetData(data, 0);
+                onComplete(clip);
+            });
+        });
     }
 
     /// <summary>

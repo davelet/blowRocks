@@ -34,6 +34,10 @@ public class LocalizationManager : MonoBehaviour
             { Language.English, "Quit" },
             { Language.Chinese, "退出游戏" }
         },
+        ["pause.about"] = new() {
+            { Language.English, "About" },
+            { Language.Chinese, "关于" }
+        },
 
         // --- Settings ---
         ["settings.title"] = new() {
@@ -97,6 +101,16 @@ public class LocalizationManager : MonoBehaviour
         ["lang.chinese"] = new() {
             { Language.English, "中文" },
             { Language.Chinese, "中文" }
+        },
+
+        // --- About ---
+        ["about.title"] = new() {
+            { Language.English, "ABOUT" },
+            { Language.Chinese, "关于" }
+        },
+        ["about.back"] = new() {
+            { Language.English, "Back" },
+            { Language.Chinese, "返回" }
         },
     };
 

@@ -625,16 +625,19 @@ public class BlowRocksSetup
         bcRect.anchoredPosition = new Vector2(0, -20);
 
         // Resume button
-        var resumeBtn = CreatePauseButton(btnContainer.transform, "Resume", new Vector2(0, 60), new Color(0.2f, 0.7f, 0.3f));
+        var resumeBtn = CreatePauseButton(btnContainer.transform, "Resume", new Vector2(0, 80), new Color(0.2f, 0.7f, 0.3f));
 
         // Settings button
-        var settingsBtn = CreatePauseButton(btnContainer.transform, "Settings", new Vector2(0, 0), new Color(0.3f, 0.5f, 0.8f));
+        var settingsBtn = CreatePauseButton(btnContainer.transform, "Settings", new Vector2(0, 20), new Color(0.3f, 0.5f, 0.8f));
+
+        // About button
+        var aboutBtn = CreatePauseButton(btnContainer.transform, "About", new Vector2(0, -40), new Color(0.5f, 0.4f, 0.7f));
 
         // Quit button
-        var quitBtn = CreatePauseButton(btnContainer.transform, "Quit", new Vector2(0, -60), new Color(0.8f, 0.2f, 0.2f));
+        var quitBtn = CreatePauseButton(btnContainer.transform, "Quit", new Vector2(0, -100), new Color(0.8f, 0.2f, 0.2f));
 
-        // Shrink button container (was 280 for 4 buttons, now 220 for 3)
-        bcRect.sizeDelta = new Vector2(250, 220);
+        // Shrink button container (4 buttons)
+        bcRect.sizeDelta = new Vector2(250, 280);
 
         // ============================================
         //  Settings Panel (inside pause)
@@ -803,6 +806,47 @@ public class BlowRocksSetup
         // Back button in settings
         var backBtn = CreatePauseButton(settingsGo.transform, "Back", new Vector2(0, -135), new Color(0.5f, 0.5f, 0.5f));
 
+        // ============================================
+        //  About Panel
+        // ============================================
+        var aboutGo = new GameObject("AboutPanel");
+        aboutGo.transform.SetParent(canvasGo.transform, false);
+        var aRect = aboutGo.AddComponent<RectTransform>();
+        aRect.anchorMin = Vector2.zero;
+        aRect.anchorMax = Vector2.one;
+        aRect.sizeDelta = Vector2.zero;
+        var aImg = aboutGo.AddComponent<Image>();
+        aImg.color = new Color(0, 0, 0, 0.85f);
+
+        var aboutTitleGo = new GameObject("AboutTitle");
+        aboutTitleGo.transform.SetParent(aboutGo.transform, false);
+        var atRect = aboutTitleGo.AddComponent<RectTransform>();
+        atRect.anchorMin = new Vector2(0.5f, 0.5f);
+        atRect.anchorMax = new Vector2(0.5f, 0.5f);
+        atRect.sizeDelta = new Vector2(400, 60);
+        atRect.anchoredPosition = new Vector2(0, 80);
+        var atText = aboutTitleGo.AddComponent<TextMeshProUGUI>();
+        atText.text = "ABOUT";
+        atText.fontSize = 40;
+        atText.color = new Color(0.4f, 0.8f, 1f);
+        atText.alignment = TextAlignmentOptions.Center;
+
+        var aboutVersionGo = new GameObject("AboutVersionText");
+        aboutVersionGo.transform.SetParent(aboutGo.transform, false);
+        var avRect = aboutVersionGo.AddComponent<RectTransform>();
+        avRect.anchorMin = new Vector2(0.5f, 0.5f);
+        avRect.anchorMax = new Vector2(0.5f, 0.5f);
+        avRect.sizeDelta = new Vector2(400, 40);
+        avRect.anchoredPosition = new Vector2(0, 20);
+        var avText = aboutVersionGo.AddComponent<TextMeshProUGUI>();
+        avText.text = $"blowRocks v{PlayerSettings.bundleVersion}";
+        avText.fontSize = 24;
+        avText.color = new Color(0.7f, 0.7f, 0.7f);
+        avText.alignment = TextAlignmentOptions.Center;
+
+        var aboutBackBtn = CreatePauseButton(aboutGo.transform, "Back", new Vector2(0, -60), new Color(0.5f, 0.5f, 0.5f));
+        aboutBackBtn.gameObject.name = "AboutBackButton";
+
         // PauseMenu script
         var pauseMenuGo = new GameObject("PauseMenu");
         var pauseMenu = pauseMenuGo.AddComponent<PauseMenu>();
@@ -812,6 +856,7 @@ public class BlowRocksSetup
         var pauseTitleText = pauseGo.transform.Find("PauseTitle")?.GetComponent<TMPro.TMP_Text>();
         var resumeText = pauseGo.transform.Find("ButtonContainer/ResumeButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var settingsText = pauseGo.transform.Find("ButtonContainer/SettingsButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var aboutText = pauseGo.transform.Find("ButtonContainer/AboutButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var quitText = pauseGo.transform.Find("ButtonContainer/QuitButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var settingsTitleText = settingsGo.transform.Find("SettingsTitle")?.GetComponent<TMPro.TMP_Text>();
         var backText = settingsGo.transform.Find("BackButton/Text")?.GetComponent<TMPro.TMP_Text>();
@@ -822,18 +867,23 @@ public class BlowRocksSetup
         var pmSO = new SerializedObject(pauseMenu);
         pmSO.FindProperty("pausePanel").objectReferenceValue = pauseGo;
         pmSO.FindProperty("settingsPanel").objectReferenceValue = settingsGo;
+        pmSO.FindProperty("aboutPanel").objectReferenceValue = aboutGo;
         pmSO.FindProperty("volumeSlider").objectReferenceValue = slider;
         pmSO.FindProperty("volumeLabelText").objectReferenceValue = vlText;
         pmSO.FindProperty("volumeValueText").objectReferenceValue = vvText;
         pmSO.FindProperty("pauseTitleText").objectReferenceValue = pauseTitleText;
         pmSO.FindProperty("resumeText").objectReferenceValue = resumeText;
         pmSO.FindProperty("settingsText").objectReferenceValue = settingsText;
+        pmSO.FindProperty("aboutText").objectReferenceValue = aboutText;
         pmSO.FindProperty("quitText").objectReferenceValue = quitText;
         pmSO.FindProperty("settingsTitleText").objectReferenceValue = settingsTitleText;
         pmSO.FindProperty("backText").objectReferenceValue = backText;
         pmSO.FindProperty("langButtonText").objectReferenceValue = langButtonText;
         pmSO.FindProperty("fullscreenLabelText").objectReferenceValue = fullscreenLabelText;
         pmSO.FindProperty("fullscreenToggle").objectReferenceValue = fullscreenToggle;
+        pmSO.FindProperty("aboutTitleText").objectReferenceValue = atText;
+        pmSO.FindProperty("aboutVersionText").objectReferenceValue = avText;
+        pmSO.FindProperty("aboutBackText").objectReferenceValue = aboutBackBtn.GetComponentInChildren<TextMeshProUGUI>();
         pmSO.ApplyModifiedProperties();
 
         slider.onValueChanged.AddListener(v => { vvText.text = Mathf.RoundToInt(v * 100) + "%"; });
