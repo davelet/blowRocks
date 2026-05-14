@@ -746,8 +746,31 @@ public class BlowRocksSetup
         vvText.color = Color.white;
         vvText.alignment = TextAlignmentOptions.MidlineLeft;
 
+        // Fullscreen toggle button in settings
+        var fsLabelGo = new GameObject("FullscreenLabel");
+        fsLabelGo.transform.SetParent(settingsGo.transform, false);
+        var fsLabelRect = fsLabelGo.AddComponent<RectTransform>();
+        fsLabelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        fsLabelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        fsLabelRect.sizeDelta = new Vector2(200, 30);
+        fsLabelRect.anchoredPosition = new Vector2(-80, -35);
+        var fsLabelText = fsLabelGo.AddComponent<TextMeshProUGUI>();
+        fsLabelText.text = "Fullscreen";
+        fsLabelText.fontSize = 22;
+        fsLabelText.color = Color.white;
+        fsLabelText.alignment = TextAlignmentOptions.MidlineLeft;
+
+        var fsBtn = CreatePauseButton(settingsGo.transform, "Off", new Vector2(80, -35), new Color(0.3f, 0.5f, 0.8f));
+        fsBtn.gameObject.name = "FullscreenButton";
+        var fsBtnText = fsBtn.GetComponentInChildren<TextMeshProUGUI>();
+        if (fsBtnText != null)
+        {
+            var cjkFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/NotoSansSC SDF.asset");
+            if (cjkFont != null) fsBtnText.font = cjkFont;
+        }
+
         // Language toggle button in settings
-        var langBtn = CreatePauseButton(settingsGo.transform, "中文/EN", new Vector2(0, -35), new Color(0.6f, 0.4f, 0.8f));
+        var langBtn = CreatePauseButton(settingsGo.transform, "中文/EN", new Vector2(0, -85), new Color(0.6f, 0.4f, 0.8f));
         langBtn.gameObject.name = "LangButton";
         var langBtnText = langBtn.GetComponentInChildren<TextMeshProUGUI>();
         if (langBtnText != null)
@@ -757,7 +780,7 @@ public class BlowRocksSetup
         }
 
         // Back button in settings
-        var backBtn = CreatePauseButton(settingsGo.transform, "Back", new Vector2(0, -85), new Color(0.5f, 0.5f, 0.5f));
+        var backBtn = CreatePauseButton(settingsGo.transform, "Back", new Vector2(0, -135), new Color(0.5f, 0.5f, 0.5f));
 
         // PauseMenu script
         var pauseMenuGo = new GameObject("PauseMenu");
@@ -772,6 +795,8 @@ public class BlowRocksSetup
         var settingsTitleText = settingsGo.transform.Find("SettingsTitle")?.GetComponent<TMPro.TMP_Text>();
         var backText = settingsGo.transform.Find("BackButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var langButtonText = settingsGo.transform.Find("LangButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var fullscreenLabelText = settingsGo.transform.Find("FullscreenLabel")?.GetComponent<TMPro.TMP_Text>();
+        var fullscreenButtonText = settingsGo.transform.Find("FullscreenButton/Text")?.GetComponent<TMPro.TMP_Text>();
 
         var pmSO = new SerializedObject(pauseMenu);
         pmSO.FindProperty("pausePanel").objectReferenceValue = pauseGo;
@@ -786,6 +811,8 @@ public class BlowRocksSetup
         pmSO.FindProperty("settingsTitleText").objectReferenceValue = settingsTitleText;
         pmSO.FindProperty("backText").objectReferenceValue = backText;
         pmSO.FindProperty("langButtonText").objectReferenceValue = langButtonText;
+        pmSO.FindProperty("fullscreenLabelText").objectReferenceValue = fullscreenLabelText;
+        pmSO.FindProperty("fullscreenButtonText").objectReferenceValue = fullscreenButtonText;
         pmSO.ApplyModifiedProperties();
 
         slider.onValueChanged.AddListener(v => { vvText.text = Mathf.RoundToInt(v * 100) + "%"; });

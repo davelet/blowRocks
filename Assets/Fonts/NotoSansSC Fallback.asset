@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:yousandi.cn,2023:
---- !u!28 &-473097913735401029
+--- !u!28 &-7500352355880258555
 Texture2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -71,7 +71,7 @@ MonoBehaviour:
   m_Name: NotoSansSC Fallback
   m_EditorClassIdentifier: 
   hashCode: 0
-  material: {fileID: 2122278671528972268}
+  material: {fileID: 7068923573742728294}
   materialHashCode: -2006316128
   m_Version: 1.1.0
   m_SourceFontFileGUID: 0f38326eca4db49da95c0a88cc13b285
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_GlyphTable: []
   m_CharacterTable: []
   m_AtlasTextures:
-  - {fileID: -473097913735401029}
+  - {fileID: -7500352355880258555}
   m_AtlasTextureIndex: 0
   m_IsMultiAtlasTexturesEnabled: 1
   m_ClearDynamicDataOnBuild: 0
@@ -192,7 +192,7 @@ MonoBehaviour:
   boldSpacing: 7
   italicStyle: 35
   tabSize: 10
---- !u!21 &2122278671528972268
+--- !u!21 &7068923573742728294
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -216,7 +216,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: -473097913735401029}
+        m_Texture: {fileID: -7500352355880258555}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []

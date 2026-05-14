@@ -52,6 +52,18 @@ public class LocalizationManager : MonoBehaviour
             { Language.English, "Language" },
             { Language.Chinese, "语言" }
         },
+        ["settings.fullscreen"] = new() {
+            { Language.English, "Fullscreen" },
+            { Language.Chinese, "全屏" }
+        },
+        ["settings.on"] = new() {
+            { Language.English, "On" },
+            { Language.Chinese, "开" }
+        },
+        ["settings.off"] = new() {
+            { Language.English, "Off" },
+            { Language.Chinese, "关" }
+        },
 
         // --- HUD ---
         ["hud.score"] = new() {
@@ -97,6 +109,9 @@ public class LocalizationManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // 从已加载的设置中恢复语言
+        CurrentLanguage = SettingsManager.Language == "zh" ? Language.Chinese : Language.English;
     }
 
     /// <summary>
@@ -123,6 +138,8 @@ public class LocalizationManager : MonoBehaviour
         if (CurrentLanguage == lang) return;
         CurrentLanguage = lang;
         OnLanguageChanged?.Invoke();
+        // 持久化保存
+        SettingsManager.Language = lang == Language.Chinese ? "zh" : "en";
         Debug.Log($"[Localization] Language changed to: {lang}");
     }
 

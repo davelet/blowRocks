@@ -8,7 +8,10 @@ public class SFX : MonoBehaviour
 {
     public static SFX Instance { get; private set; }
 
-    [SerializeField] private float masterVolume = 0.5f;
+    /// <summary>
+    /// 音量由 SettingsManager 统一管理
+    /// </summary>
+    private float masterVolume => SettingsManager.Volume;
 
     private AudioSource audioSource;
     private AudioClip laserClip;

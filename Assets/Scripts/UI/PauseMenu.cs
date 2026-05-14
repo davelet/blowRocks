@@ -20,6 +20,8 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private TextMeshProUGUI volumeValueText;
     [SerializeField] private TextMeshProUGUI backText;
     [SerializeField] private TextMeshProUGUI langButtonText;
+    [SerializeField] private TextMeshProUGUI fullscreenLabelText;
+    [SerializeField] private TextMeshProUGUI fullscreenButtonText;
 
     [Header("Controls")]
     [SerializeField] private Slider volumeSlider;
@@ -61,6 +63,7 @@ public class PauseMenu : MonoBehaviour
         {
             WireButton(settingsPanel, "BackButton", CloseSettings);
             WireButton(settingsPanel, "LangButton", OnLanguageToggle);
+            WireButton(settingsPanel, "FullscreenButton", OnFullscreenToggle);
         }
     }
 
@@ -102,13 +105,20 @@ public class PauseMenu : MonoBehaviour
                 ? LocalizationManager.Get("lang.english")
                 : LocalizationManager.Get("lang.chinese");
         }
+
+        if (fullscreenLabelText != null)
+            fullscreenLabelText.text = LocalizationManager.Get("settings.fullscreen");
+        if (fullscreenButtonText != null)
+            fullscreenButtonText.text = SettingsManager.Fullscreen
+                ? LocalizationManager.Get("settings.on")
+                : LocalizationManager.Get("settings.off");
     }
 
     private void Start()
     {
         if (volumeSlider != null)
         {
-            volumeSlider.value = AudioListener.volume;
+            volumeSlider.value = SettingsManager.Volume;
             volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
         }
     }
@@ -159,7 +169,7 @@ public class PauseMenu : MonoBehaviour
     {
         if (pausePanel != null) pausePanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
-        if (volumeSlider != null) volumeSlider.value = AudioListener.volume;
+        if (volumeSlider != null) volumeSlider.value = SettingsManager.Volume;
     }
 
     public void CloseSettings()
@@ -170,7 +180,7 @@ public class PauseMenu : MonoBehaviour
 
     private void OnVolumeChanged(float value)
     {
-        AudioListener.volume = value;
+        SettingsManager.Volume = value; // 内部会设置 AudioListener.volume 并保存
         if (volumeValueText != null)
             volumeValueText.text = Mathf.RoundToInt(value * 100) + "%";
     }
@@ -178,6 +188,12 @@ public class PauseMenu : MonoBehaviour
     private void OnLanguageToggle()
     {
         LocalizationManager.ToggleLanguage();
+    }
+
+    private void OnFullscreenToggle()
+    {
+        SettingsManager.Fullscreen = !SettingsManager.Fullscreen;
+        UpdateAllTexts();
     }
 
     public void QuitGame()

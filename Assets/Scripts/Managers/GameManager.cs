@@ -6,6 +6,11 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern void _ExitOnClose();
+#endif
+
     [Header("References")]
     [SerializeField] private PlayerController player;
     [SerializeField] private AsteroidSpawner spawner;
@@ -45,6 +50,15 @@ public class GameManager : MonoBehaviour
 
         // Start the game
         spawner?.StartSpawning();
+
+        // macOS: close window immediately on red button click
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+        Application.wantsToQuit += () =>
+        {
+            _ExitOnClose();
+            return true;
+        };
+#endif
     }
 
     private void OnDestroy()

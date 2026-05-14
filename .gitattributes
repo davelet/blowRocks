@@ -1,0 +1,36 @@
+* text=auto
+
+# Unity YAML merge tool for scene/prefab/meta files
+*.meta text eol=lf diff
+*.unity text eol=lf diff
+*.prefab text eol=lf diff
+*.asset text eol=lf diff
+*.controller text eol=lf diff
+*.mat text eol=lf diff
+*.anim text eol=lf diff
+*.playable text eol=lf diff
+*.renderTexture text eol=lf diff
+*.physicsMaterial2D text eol=lf diff
+*.physicsMaterial text eol=lf diff
+*.guiskin text eol=lf diff
+*.flare text eol=lf diff
+*.fontsettings text eol=lf diff
+
+# C# scripts
+*.cs text eol=lf diff=csharp
+
+# Shader files
+*.shader text eol=lf diff
+*.compute text eol=lf diff
+*.cginc text eol=lf diff
+*.hlsl text eol=lf diff
+
+# JSON/YAML config files
+*.json text eol=lf diff
+*.yaml text eol=lf diff
+*.yml text eol=lf diff
+*.xml text eol=lf diff
+
+# Other text files
+*.md text eol=lf diff
+*.txt text eol=lf diff
