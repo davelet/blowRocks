@@ -8,7 +8,7 @@ using System.Net;
 
 /// <summary>
 /// Editor tool: creates a Chinese (CJK) font asset and adds it as a TMP fallback.
-/// Menu: blowRocks → Setup Chinese Font
+/// Called by BlowRocksSetup.cs, no separate menu needed.
 /// </summary>
 public static class ChineseFontSetup
 {
@@ -16,17 +16,12 @@ public static class ChineseFontSetup
     private const string CJKFontAssetPath = "Assets/Fonts/NotoSansSC SDF.asset";
     private const string FallbackAssetPath = "Assets/Fonts/NotoSansSC Fallback.asset";
 
-    [MenuItem("blowRocks/Setup Chinese Font")]
     public static void SetupChineseFont()
     {
         // Step 1: Get the TTF font file
         if (!EnsureCJKFont())
         {
-            EditorUtility.DisplayDialog("blowRocks",
-                "Could not find or download a Chinese font.\n\n" +
-                "Please manually place a .ttf file at:\n" +
-                CJKFontPath + "\n\n" +
-                "Then run this menu item again.", "OK");
+            Debug.LogWarning("[ChineseFont] Could not find or download a Chinese font.");
             return;
         }
 
@@ -37,10 +32,7 @@ public static class ChineseFontSetup
         SetAsFallback();
 
         AssetDatabase.Refresh();
-        EditorUtility.DisplayDialog("blowRocks",
-            "Chinese font setup complete!\n\n" +
-            "Chinese characters will now display correctly in the game.\n" +
-            "Use the language toggle button in the pause menu to switch.", "OK");
+        Debug.Log("[ChineseFont] Chinese font setup complete.");
     }
 
     static bool EnsureCJKFont()

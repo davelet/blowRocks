@@ -22,16 +22,6 @@ public class MusicManagerTest : MonoBehaviour
             }
         }
 
-        // 按 N 键切换到菜单音乐
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            Debug.Log("[Test] 按下 N 键 - 切换到菜单音乐");
-            if (MusicManager.Instance != null)
-            {
-                MusicManager.Instance.PlayMusic(MusicManager.GameState.Menu);
-            }
-        }
-
         // 按 B 键切换到暂停音乐
         if (Input.GetKeyDown(KeyCode.B))
         {

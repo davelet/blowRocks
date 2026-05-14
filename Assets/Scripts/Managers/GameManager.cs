@@ -58,12 +58,6 @@ public class GameManager : MonoBehaviour
         // Start the game
         spawner?.StartSpawning();
 
-        // 通知 MusicManager 游戏开始
-        if (MusicManager.Instance != null)
-        {
-            MusicManager.Instance.NotifyGameStarted();
-        }
-
         // macOS: close window immediately on red button click
 #if UNITY_STANDALONE_OSX && !UNITY_EDITOR
         Application.wantsToQuit += () =>
