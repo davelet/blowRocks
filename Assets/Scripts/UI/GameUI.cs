@@ -19,7 +19,7 @@ public class GameUI : MonoBehaviour
 
     private void Awake()
     {
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = GameManager.Instance;
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);

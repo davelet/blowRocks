@@ -1,8 +1,10 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Procedural sound effects generator. No audio files needed!
 /// Creates laser, explosion, and hit sounds from code.
+/// Uses an AudioSource pool to avoid pitch conflicts between concurrent sounds.
 /// </summary>
 public class SFX : MonoBehaviour
 {
@@ -13,7 +15,10 @@ public class SFX : MonoBehaviour
     /// </summary>
     private float masterVolume => SettingsManager.Volume;
 
-    private AudioSource audioSource;
+    private const int POOL_SIZE = 6;
+    private List<AudioSource> sourcePool;
+    private int poolIndex;
+
     private AudioClip laserClip;
     private AudioClip explosionClip;
     private AudioClip hitClip;
@@ -22,8 +27,16 @@ public class SFX : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
+
+        // 创建 AudioSource 池，每个音源独立 pitch
+        sourcePool = new List<AudioSource>(POOL_SIZE);
+        for (int i = 0; i < POOL_SIZE; i++)
+        {
+            var src = gameObject.AddComponent<AudioSource>();
+            src.playOnAwake = false;
+            sourcePool.Add(src);
+        }
+        poolIndex = 0;
 
         // Generate all sound clips
         laserClip = GenerateLaser();
@@ -32,23 +45,36 @@ public class SFX : MonoBehaviour
         hitClip = GenerateHit();
     }
 
+    /// <summary>
+    /// 从池中轮询获取一个空闲 AudioSource
+    /// </summary>
+    private AudioSource GetPooledSource()
+    {
+        var src = sourcePool[poolIndex];
+        poolIndex = (poolIndex + 1) % POOL_SIZE;
+        return src;
+    }
+
     public void PlayLaser()
     {
-        audioSource.pitch = Random.Range(0.9f, 1.1f);
-        audioSource.PlayOneShot(laserClip, 0.3f * masterVolume);
+        var src = GetPooledSource();
+        src.pitch = Random.Range(0.9f, 1.1f);
+        src.PlayOneShot(laserClip, 0.3f * masterVolume);
     }
 
     public void PlayExplosion(float size = 1f)
     {
-        audioSource.pitch = Random.Range(0.7f, 1.0f) / size;
+        var src = GetPooledSource();
+        src.pitch = Random.Range(0.7f, 1.0f) / size;
         var clip = size > 0.5f ? explosionClip : explodeSmallClip;
-        audioSource.PlayOneShot(clip, Mathf.Clamp01(size * 0.6f) * masterVolume);
+        src.PlayOneShot(clip, Mathf.Clamp01(size * 0.6f) * masterVolume);
     }
 
     public void PlayHit()
     {
-        audioSource.pitch = Random.Range(0.8f, 1.2f);
-        audioSource.PlayOneShot(hitClip, 0.4f * masterVolume);
+        var src = GetPooledSource();
+        src.pitch = Random.Range(0.8f, 1.2f);
+        src.PlayOneShot(hitClip, 0.4f * masterVolume);
     }
 
     // --- Procedural Audio Generation ---

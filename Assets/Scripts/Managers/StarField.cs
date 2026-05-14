@@ -14,6 +14,7 @@ public class StarField : MonoBehaviour
     private float[] starSizes;
     private float[] starBrightness;
     private float[] starPhases;
+    private Material starMaterial;
 
     private void Start()
     {
@@ -21,6 +22,9 @@ public class StarField : MonoBehaviour
         starSizes = new float[starCount];
         starBrightness = new float[starCount];
         starPhases = new float[starCount];
+
+        // 缓存材质，不再每帧创建
+        starMaterial = new Material(Shader.Find("Sprites/Default"));
 
         for (int i = 0; i < starCount; i++)
         {
@@ -37,11 +41,9 @@ public class StarField : MonoBehaviour
 
     private void OnRenderObject()
     {
-        if (starPositions == null) return;
+        if (starPositions == null || starMaterial == null) return;
 
-        // Create a simple material for drawing
-        var mat = new Material(Shader.Find("Sprites/Default"));
-        mat.SetPass(0);
+        starMaterial.SetPass(0);
 
         GL.PushMatrix();
         GL.MultMatrix(transform.localToWorldMatrix);
@@ -65,5 +67,14 @@ public class StarField : MonoBehaviour
 
         GL.End();
         GL.PopMatrix();
+    }
+
+    private void OnDestroy()
+    {
+        // 清理材质，防止泄漏
+        if (starMaterial != null)
+        {
+            Destroy(starMaterial);
+        }
     }
 }

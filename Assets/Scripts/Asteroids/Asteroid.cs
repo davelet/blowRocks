@@ -17,17 +17,22 @@ public class Asteroid : MonoBehaviour
     [Header("Score")]
     [SerializeField] private int scoreValue = 10;
 
+    [Header("Cleanup")]
+    [SerializeField] private float maxDistanceFromOrigin = 30f; // 自动向清理的距离
+
     private Rigidbody2D rb;
-    private GameManager gameManager;
+    private Vector3 spawnPosition;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        gameManager = FindFirstObjectByType<GameManager>();
+        // 不再 FindFirstObjectByType，用 GameManager.Instance 单例
     }
 
     private void Start()
     {
+        spawnPosition = transform.position;
+
         // Random drift direction
         Vector2 randomDir = Random.insideUnitCircle.normalized;
         float speed = Random.Range(minSpeed, maxSpeed);
@@ -37,12 +42,22 @@ public class Asteroid : MonoBehaviour
         rb.angularVelocity = Random.Range(-rotationSpeed, rotationSpeed);
     }
 
+    private void Update()
+    {
+        // 清理飘太远的小行星
+        float dist = Vector3.Distance(transform.position, spawnPosition);
+        if (dist > maxDistanceFromOrigin)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     /// <summary>
     /// Called by Bullet when it hits this asteroid.
     /// </summary>
     public void OnHit()
     {
-        gameManager?.AddScore(scoreValue);
+        GameManager.Instance?.AddScore(scoreValue);
 
         // Explosion VFX
         float astSize = transform.localScale.x;
@@ -58,7 +73,6 @@ public class Asteroid : MonoBehaviour
             }
         }
 
-        // Spawn particle effect here if you have one
         Destroy(gameObject);
     }
 

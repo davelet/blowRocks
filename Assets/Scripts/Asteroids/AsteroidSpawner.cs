@@ -21,9 +21,15 @@ public class AsteroidSpawner : MonoBehaviour
     private float nextSpawnTime;
     private bool isSpawning = false;
 
+    // 缓存初始值，ResetDifficulty 用
+    private float initialSpawnInterval;
+    private int initialAsteroidsPerWave;
+
     private void Awake()
     {
         mainCamera = Camera.main;
+        initialSpawnInterval = spawnInterval;
+        initialAsteroidsPerWave = asteroidsPerWave;
     }
 
     private void Update()
@@ -50,8 +56,8 @@ public class AsteroidSpawner : MonoBehaviour
 
     public void ResetDifficulty()
     {
-        spawnInterval = 2f;
-        asteroidsPerWave = 1;
+        spawnInterval = initialSpawnInterval;
+        asteroidsPerWave = initialAsteroidsPerWave;
     }
 
     private void SpawnWave()

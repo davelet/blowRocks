@@ -4,6 +4,8 @@ using TMPro;
 
 public class PauseMenu : MonoBehaviour
 {
+    public static PauseMenu Instance { get; private set; }
+
     [Header("Panels")]
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private GameObject settingsPanel;
@@ -21,10 +23,10 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private TextMeshProUGUI backText;
     [SerializeField] private TextMeshProUGUI langButtonText;
     [SerializeField] private TextMeshProUGUI fullscreenLabelText;
-    [SerializeField] private TextMeshProUGUI fullscreenButtonText;
 
     [Header("Controls")]
     [SerializeField] private Slider volumeSlider;
+    [SerializeField] private Toggle fullscreenToggle;
 
     private bool isPaused = false;
     private GameManager gameManager;
@@ -33,7 +35,8 @@ public class PauseMenu : MonoBehaviour
 
     private void Awake()
     {
-        gameManager = FindFirstObjectByType<GameManager>();
+        Instance = this;
+        gameManager = GameManager.Instance;
         if (pausePanel != null) pausePanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
 
@@ -63,7 +66,12 @@ public class PauseMenu : MonoBehaviour
         {
             WireButton(settingsPanel, "BackButton", CloseSettings);
             WireButton(settingsPanel, "LangButton", OnLanguageToggle);
-            WireButton(settingsPanel, "FullscreenButton", OnFullscreenToggle);
+        }
+
+        if (fullscreenToggle != null)
+        {
+            fullscreenToggle.isOn = SettingsManager.Fullscreen;
+            fullscreenToggle.onValueChanged.AddListener(OnFullscreenChanged);
         }
     }
 
@@ -108,10 +116,6 @@ public class PauseMenu : MonoBehaviour
 
         if (fullscreenLabelText != null)
             fullscreenLabelText.text = LocalizationManager.Get("settings.fullscreen");
-        if (fullscreenButtonText != null)
-            fullscreenButtonText.text = SettingsManager.Fullscreen
-                ? LocalizationManager.Get("settings.on")
-                : LocalizationManager.Get("settings.off");
     }
 
     private void Start()
@@ -190,10 +194,9 @@ public class PauseMenu : MonoBehaviour
         LocalizationManager.ToggleLanguage();
     }
 
-    private void OnFullscreenToggle()
+    private void OnFullscreenChanged(bool isOn)
     {
-        SettingsManager.Fullscreen = !SettingsManager.Fullscreen;
-        UpdateAllTexts();
+        SettingsManager.Fullscreen = isOn;
     }
 
     public void QuitGame()

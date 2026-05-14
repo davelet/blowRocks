@@ -746,7 +746,7 @@ public class BlowRocksSetup
         vvText.color = Color.white;
         vvText.alignment = TextAlignmentOptions.MidlineLeft;
 
-        // Fullscreen toggle button in settings
+        // Fullscreen toggle in settings
         var fsLabelGo = new GameObject("FullscreenLabel");
         fsLabelGo.transform.SetParent(settingsGo.transform, false);
         var fsLabelRect = fsLabelGo.AddComponent<RectTransform>();
@@ -760,14 +760,35 @@ public class BlowRocksSetup
         fsLabelText.color = Color.white;
         fsLabelText.alignment = TextAlignmentOptions.MidlineLeft;
 
-        var fsBtn = CreatePauseButton(settingsGo.transform, "Off", new Vector2(80, -35), new Color(0.3f, 0.5f, 0.8f));
-        fsBtn.gameObject.name = "FullscreenButton";
-        var fsBtnText = fsBtn.GetComponentInChildren<TextMeshProUGUI>();
-        if (fsBtnText != null)
-        {
-            var cjkFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/NotoSansSC SDF.asset");
-            if (cjkFont != null) fsBtnText.font = cjkFont;
-        }
+        var fsToggleGo = new GameObject("FullscreenToggle");
+        fsToggleGo.transform.SetParent(settingsGo.transform, false);
+        var fsToggleRect = fsToggleGo.AddComponent<RectTransform>();
+        fsToggleRect.anchorMin = new Vector2(0.5f, 0.5f);
+        fsToggleRect.anchorMax = new Vector2(0.5f, 0.5f);
+        fsToggleRect.sizeDelta = new Vector2(40, 40);
+        fsToggleRect.anchoredPosition = new Vector2(80, -35);
+        var fsToggle = fsToggleGo.AddComponent<Toggle>();
+
+        var fsToggleBg = new GameObject("Background");
+        fsToggleBg.transform.SetParent(fsToggleGo.transform, false);
+        var fsToggleBgRect = fsToggleBg.AddComponent<RectTransform>();
+        fsToggleBgRect.anchorMin = Vector2.zero;
+        fsToggleBgRect.anchorMax = Vector2.one;
+        fsToggleBgRect.sizeDelta = Vector2.zero;
+        var fsToggleBgImg = fsToggleBg.AddComponent<Image>();
+        fsToggleBgImg.color = new Color(0.3f, 0.5f, 0.8f);
+        fsToggle.targetGraphic = fsToggleBgImg;
+
+        var fsToggleCheck = new GameObject("Checkmark");
+        fsToggleCheck.transform.SetParent(fsToggleBg.transform, false);
+        var fsToggleCheckRect = fsToggleCheck.AddComponent<RectTransform>();
+        fsToggleCheckRect.anchorMin = new Vector2(0.1f, 0.1f);
+        fsToggleCheckRect.anchorMax = new Vector2(0.9f, 0.9f);
+        fsToggleCheckRect.sizeDelta = Vector2.zero;
+        var fsToggleCheckImg = fsToggleCheck.AddComponent<Image>();
+        fsToggleCheckImg.color = Color.white;
+        fsToggle.graphic = fsToggleCheckImg;
+        fsToggle.isOn = Screen.fullScreen;
 
         // Language toggle button in settings
         var langBtn = CreatePauseButton(settingsGo.transform, "中文/EN", new Vector2(0, -85), new Color(0.6f, 0.4f, 0.8f));
@@ -796,7 +817,7 @@ public class BlowRocksSetup
         var backText = settingsGo.transform.Find("BackButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var langButtonText = settingsGo.transform.Find("LangButton/Text")?.GetComponent<TMPro.TMP_Text>();
         var fullscreenLabelText = settingsGo.transform.Find("FullscreenLabel")?.GetComponent<TMPro.TMP_Text>();
-        var fullscreenButtonText = settingsGo.transform.Find("FullscreenButton/Text")?.GetComponent<TMPro.TMP_Text>();
+        var fullscreenToggle = settingsGo.transform.Find("FullscreenToggle")?.GetComponent<Toggle>();
 
         var pmSO = new SerializedObject(pauseMenu);
         pmSO.FindProperty("pausePanel").objectReferenceValue = pauseGo;
@@ -812,7 +833,7 @@ public class BlowRocksSetup
         pmSO.FindProperty("backText").objectReferenceValue = backText;
         pmSO.FindProperty("langButtonText").objectReferenceValue = langButtonText;
         pmSO.FindProperty("fullscreenLabelText").objectReferenceValue = fullscreenLabelText;
-        pmSO.FindProperty("fullscreenButtonText").objectReferenceValue = fullscreenButtonText;
+        pmSO.FindProperty("fullscreenToggle").objectReferenceValue = fullscreenToggle;
         pmSO.ApplyModifiedProperties();
 
         slider.onValueChanged.AddListener(v => { vvText.text = Mathf.RoundToInt(v * 100) + "%"; });

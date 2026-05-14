@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// Controls the player ship: movement and rotation toward the mouse cursor.
@@ -16,14 +17,20 @@ public class PlayerController : MonoBehaviour
 
     [Header("Health")]
     [SerializeField] private int maxHealth = 3;
+    [SerializeField] private float invincibleDuration = 2f;       // 无敌持续时间(秒)
+    [SerializeField] private float invincibleBlinkRate = 0.1f;    // 闪烁频率(秒)
 
     private int currentHealth;
     private float nextFireTime;
     private Rigidbody2D rb;
     private Camera mainCamera;
+    private bool isInvincible;
+    private SpriteRenderer spriteRenderer;
+    private Collider2D col;
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
+    public bool IsInvincible => isInvincible;
 
     public System.Action<int, int> OnHealthChanged;
     public System.Action OnPlayerDied;
@@ -32,6 +39,8 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        col = GetComponent<Collider2D>();
         currentHealth = maxHealth;
     }
 
@@ -91,6 +100,8 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(int damage = 1)
     {
+        if (isInvincible) return;
+
         VFX.Instance?.Explosion(transform.position, new Color(1f, 0.3f, 0.2f), 1.5f, 25);
         SFX.Instance?.PlayHit();
         currentHealth -= damage;
@@ -113,5 +124,32 @@ public class PlayerController : MonoBehaviour
     {
         currentHealth = maxHealth;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        StartCoroutine(InvincibilityCoroutine());
+    }
+
+    /// <summary>
+    /// 无敌帧：禁用碰撞 + 闪烁效果，持续 invincibleDuration 秒
+    /// </summary>
+    private IEnumerator InvincibilityCoroutine()
+    {
+        isInvincible = true;
+        if (col != null) col.enabled = false;
+
+        float elapsed = 0f;
+        while (elapsed < invincibleDuration)
+        {
+            // 闪烁：交替显示/隐藏
+            if (spriteRenderer != null)
+                spriteRenderer.enabled = !spriteRenderer.enabled;
+
+            yield return new WaitForSeconds(invincibleBlinkRate);
+            elapsed += invincibleBlinkRate;
+        }
+
+        // 恢复正常
+        isInvincible = false;
+        if (col != null) col.enabled = true;
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = true;
     }
 }

@@ -172,3 +172,4 @@ MonoBehaviour:
   maxSpeed: 2
   rotationSpeed: 50
   scoreValue: 10
+  maxDistanceFromOrigin: 30
